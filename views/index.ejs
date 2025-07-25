@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Techspring – Innovative AI, computing, and future-tech company based in Australia.">
+  <title>Techspring</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="light">
+
+  <% include partials/header %>
+
+  <div id="hero">
+    <div id="particles-js"></div>
+    <div class="hero-content">
+      <h1>Welcome to Techspring</h1>
+      <p>Driving the future of AI and smart computing in Australia.</p>
+    </div>
+  </div>
+
+  <div class="info-bar">
+    <span>🕒 <%= localTime %></span>
+    <span> | </span>
+    <span><%= weather %></span>
+  </div>
+
+  <main class="content">
+    <section>
+      <h2>What We Do</h2>
+      <p>Techspring is a forward-thinking innovation hub focused on artificial intelligence, cloud automation, and digital product development.</p>
+    </section>
+  </main>
+
+  <% include partials/footer %>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+  <script src="/js/particles-config.js"></script>
+  <script src="/js/theme-toggle.js"></script>
+</body>
+</html>
+// Content for index.ejs

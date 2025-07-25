@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+.light-mode {
+  background: #fff;
+  color: #000;
+}
+.dark-mode {
+  background: #111;
+  color: #eee;
+}
+.hero {
+  padding: 100px 20px;
+  text-align: center;
+}
+nav a {
+  margin: 0 10px;
+}
+.active {
+  font-weight: bold;
+}
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.9em;
+}
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}

@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Environment config
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Build and temp files
+dist/
+temp/
+.cache/
+*.zip

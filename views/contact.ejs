@@ -1,0 +1,22 @@
+<!-- views/contact.ejs -->
+<%- include("partials/header") %>
+
+<section class="page">
+  <h1>Contact Us</h1>
+  <p>If you’d like to learn more about Techspring or collaborate, reach out using the form below.</p>
+
+  <form method="POST" action="/contact">
+    <label for="name">Name</label>
+    <input type="text" name="name" required />
+
+    <label for="email">Email</label>
+    <input type="email" name="email" required />
+
+    <label for="message">Message</label>
+    <textarea name="message" rows="6" required></textarea>
+
+    <button type="submit">Send Message</button>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

@@ -1,0 +1,1 @@
+// Content for hero-rotation.js

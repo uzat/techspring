@@ -1,0 +1,17 @@
+<!-- views/blog/show.ejs -->
+<%- include("../partials/header") %>
+
+<section class="page">
+  <h1><%= post.title %></h1>
+  <p class="blog-meta">Posted <%= post.createdAt.toLocaleDateString() %></p>
+  <div class="blog-body">
+    <p><%= post.body %></p>
+  </div>
+
+  <a href="/blog/<%= post._id %>/edit" class="button">Edit</a>
+  <form action="/blog/<%= post._id %>?_method=DELETE" method="POST" style="display:inline;">
+    <button type="submit" class="button" style="background-color: #ff4444;">Delete</button>
+  </form>
+</section>
+
+<%- include("../partials/footer") %>

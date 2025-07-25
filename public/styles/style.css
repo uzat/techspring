@@ -1,0 +1,96 @@
+/* public/css/style.css */
+
+:root {
+  --light-bg: #ffffff;
+  --light-text: #111111;
+  --dark-bg: #0b0b0b;
+  --dark-text: #eeeeee;
+}
+
+body.light {
+  background-color: var(--light-bg);
+  color: var(--light-text);
+}
+
+body.dark {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.navbar a {
+  color: #00ffff;
+  text-decoration: none;
+  margin-right: 1.5rem;
+}
+
+.navbar a.active {
+  font-weight: bold;
+  border-bottom: 2px solid #00ffff;
+}
+
+#hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding-top: 25vh;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin: 0;
+}
+
+.info-bar {
+  text-align: center;
+  font-size: 1rem;
+  margin: 1rem 0;
+  color: var(--text-color);
+}
+
+.footer {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #ccc;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+  backdrop-filter: blur(4px);
+}
+
+.footer a {
+  color: #00ffff;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}

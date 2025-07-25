@@ -1,0 +1,26 @@
+<!-- views/blog.ejs -->
+<%- include("partials/header") %>
+
+<section class="page">
+  <h1>Techspring Blog</h1>
+  <p>Insights, updates, and innovations from our team.</p>
+
+  <% if (posts.length === 0) { %>
+    <p>No posts published yet.</p>
+  <% } else { %>
+    <ul class="blog-list">
+      <% posts.forEach(post => { %>
+        <li class="blog-post">
+          <h2><a href="/blog/<%= post._id %>"><%= post.title %></a></h2>
+          <p class="blog-meta">Posted <%= post.createdAt.toLocaleDateString() %></p>
+          <p><%= post.excerpt %></p>
+          <a href="/blog/<%= post._id %>">Read More</a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+
+  <a class="button" href="/blog/new">+ New Post</a>
+</section>
+
+<%- include("partials/footer") %>
