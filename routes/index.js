@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // ===== ROUTES/INDEX.JS =====
 // routes/index.js
 const express = require('express');
@@ -33,14 +32,3 @@ router.get('/acknowledgment', (req, res) => {
 });
 
 module.exports = router;
-=======
-const express = require('express');
-const router = express.Router();
-
-// Landing page
-router.get('/', (req, res) => {
-  res.render('index');
-});
-
-module.exports = router;
->>>>>>> 1f5f227f3e7ffd0d8363db04b75220664e1a9fe1
