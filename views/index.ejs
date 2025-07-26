@@ -1,11 +1,63 @@
-// ===== VIEWS/INDEX.EJS =====
 <!-- views/index.ejs -->
 <%- include('partials/header') %>
 
 <main class="main-content">
     <div id="particles-js"></div>
-    <script src="/js/theme-toggle.js"></script>
+    
     <section class="hero">
+        <!-- Add the rotating effects container here -->
+        <div class="hero-effects-container">
+            <!-- Effect 1: Three.js Chrome Sphere -->
+            <div id="chrome-sphere-container" class="effect-container" style="display: none;">
+                <canvas id="chrome-sphere"></canvas>
+            </div>
+            
+            <!-- Effect 2: Typed.js Animation Container -->
+            <div id="typed-container" class="effect-container" style="display: none;">
+                <h1 class="typed-headline">
+                    <span id="typed-text"></span>
+                </h1>
+            </div>
+            
+            <!-- Effect 3: Neural Network Animation -->
+            <div id="neural-network" class="effect-container" style="display: none;">
+                <canvas id="neural-canvas"></canvas>
+            </div>
+            
+            <!-- Effect 4: AI Processing Widget -->
+            <div id="ai-processing" class="effect-container" style="display: none;">
+                <div class="ai-widget">
+                    <div class="ai-header">
+                        <span class="ai-status-dot"></span>
+                        AI SYSTEM STATUS
+                    </div>
+                    <div class="ai-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Neural Processing:</span>
+                            <div class="metric-bar">
+                                <div class="metric-fill" id="neural-fill"></div>
+                            </div>
+                            <span class="metric-value" id="neural-value">0%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Data Analysis:</span>
+                            <div class="metric-bar">
+                                <div class="metric-fill" id="data-fill"></div>
+                            </div>
+                            <span class="metric-value" id="data-value">0%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Model Training:</span>
+                            <div class="metric-bar">
+                                <div class="metric-fill" id="model-fill"></div>
+                            </div>
+                            <span class="metric-value" id="model-value">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="hero-container">
             <div class="hero-banner">
                 <img id="rotating-banner" src="/images/ai-banner-1.jpg" alt="AI Technology Banner" class="banner-image">
@@ -13,12 +65,6 @@
             <div class="hero-content">
                 <h1>Welcome to TechSpring</h1>
                 <p class="hero-subtitle">AI Innovation & Future Technology Solutions</p>
-                <div class="hero-info">
-                    <div class="time-weather">
-                        <div id="current-time" class="time-display">Loading time...</div>
-                        <div id="weather-info" class="weather-display">Loading weather...</div>
-                    </div>
-                </div>
                 <div class="hero-actions">
                     <a href="/about" class="btn btn-primary">Learn More</a>
                     <a href="/contact" class="btn btn-secondary">Get In Touch</a>

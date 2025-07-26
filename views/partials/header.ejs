@@ -1,4 +1,3 @@
-// ===== VIEWS/PARTIALS/HEADER.EJS =====
 <!-- views/partials/header.ejs -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,8 +9,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CDN Libraries for all effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
 </head>
 <body class="light-mode">
+    <!-- Ticker Tape Header -->
+    <div class="ticker-container">
+        <div class="ticker">
+            <div class="ticker-content" id="ticker-content">
+                <span id="current-time">Loading time...</span>
+                <span class="ticker-separator">•</span>
+                <span id="weather-info">Loading weather...</span>
+                <span class="ticker-separator">•</span>
+                <span>Welcome to TechSpring - AI Innovation & Technology Solutions</span>
+                <span class="ticker-separator">•</span>
+                <span>Mornington Peninsula, Victoria, Australia</span>
+            </div>
+        </div>
+    </div>
+
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -47,3 +64,58 @@
             </div>
         </div>
     </nav>
+
+    <script>
+        // Update time function
+        function updateTime() {
+            const now = new Date();
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            
+            const timeString = now.toLocaleTimeString(undefined, options);
+            const dateString = now.toLocaleDateString(undefined, {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            });
+            
+            // Get timezone abbreviation
+            const timeZoneString = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const timeZoneAbbr = new Intl.DateTimeFormat('en', {
+                timeZoneName: 'short'
+            }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '';
+            
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = `${dateString} ${timeString} ${timeZoneAbbr}`;
+            }
+        }
+
+        // Weather function (placeholder until you get API key)
+        function updateWeather() {
+            const weatherElement = document.getElementById('weather-info');
+            if (weatherElement) {
+                // Placeholder weather info
+                weatherElement.textContent = 'Mornington Peninsula: Weather data loading...';
+            }
+        }
+
+        // Initialize ticker
+        function initializeTicker() {
+            updateTime();
+            updateWeather();
+            
+            // Update time every second
+            setInterval(updateTime, 1000);
+            
+            // Update weather every 10 minutes (600000ms)
+            // setInterval(updateWeather, 600000);
+        }
+
+        // Run when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeTicker);
+    </script>

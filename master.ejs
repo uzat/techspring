@@ -354,6 +354,21 @@ services:
             </div>
         </div>
     </nav>
+    
+    <!-- Ticker Tape -->
+    <div class="ticker-container">
+        <div class="ticker">
+            <div class="ticker-content" id="ticker-content">
+                <span id="current-time">Loading time...</span>
+                <span class="ticker-separator">•</span>
+                <span id="weather-info">Loading weather...</span>
+                <span class="ticker-separator">•</span>
+                <span>Welcome to TechSpring - AI Innovation & Technology Solutions</span>
+                <span class="ticker-separator">•</span>
+                <span>Mornington Peninsula, Victoria, Australia</span>
+            </div>
+        </div>
+    </div>
 
 // ===== VIEWS/PARTIALS/FOOTER.EJS =====
 <!-- views/partials/footer.ejs -->
@@ -409,12 +424,6 @@ services:
             <div class="hero-content">
                 <h1>Welcome to TechSpring</h1>
                 <p class="hero-subtitle">AI Innovation & Future Technology Solutions</p>
-                <div class="hero-info">
-                    <div class="time-weather">
-                        <div id="current-time" class="time-display">Loading time...</div>
-                        <div id="weather-info" class="weather-display">Loading weather...</div>
-                    </div>
-                </div>
                 <div class="hero-actions">
                     <a href="/about" class="btn btn-primary">Learn More</a>
                     <a href="/contact" class="btn btn-secondary">Get In Touch</a>
@@ -448,7 +457,6 @@ services:
 </main>
 
 <%- include('partials/footer') %>
-
 // ===== VIEWS/ABOUT.EJS =====
 <!-- views/about.ejs -->
 <%- include('partials/header') %>
@@ -645,7 +653,7 @@ services:
                             <div class="post-content">
                                 <h2><a href="/blog/<%= post.id %>"><%= post.title %></a></h2>
                                 <p class="post-excerpt">
-                                    <%= post.content.length > 200 ? post.content.substring(0, 200) + '...' : post.content %>
+                                    <%- post.content.length > 200 ? post.content.substring(0, 200) + '...' : post.content %>
                                 </p>
                                 <div class="post-meta">
                                     <span class="post-date">
@@ -813,7 +821,49 @@ body {
     transition: 0.3s;
 }
 
-/* Main Content */
+/* Ticker Tape */
+.ticker-container {
+    background: var(--primary-color);
+    color: white;
+    overflow: hidden;
+    white-space: nowrap;
+    position: sticky;
+    top: 70px;
+    z-index: 999;
+    border-bottom: 1px solid var(--border);
+}
+
+.ticker {
+    height: 35px;
+    display: flex;
+    align-items: center;
+}
+
+.ticker-content {
+    display: inline-block;
+    animation: scroll-left 60s linear infinite;
+    padding-left: 100%;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.ticker-separator {
+    margin: 0 2rem;
+    opacity: 0.7;
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translate3d(100%, 0, 0);
+    }
+    100% {
+        transform: translate3d(-100%, 0, 0);
+    }
+}
+
+.ticker-content:hover {
+    animation-play-state: paused;
+}
 .main-content {
     min-height: calc(100vh - 140px);
 }
@@ -877,14 +927,6 @@ body {
     font-size: 1.2rem;
     margin-bottom: 2rem;
     opacity: 0.9;
-}
-
-.time-weather {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 10px;
-    padding: 1rem;
-    margin-bottom: 2rem;
 }
 
 .time-display, .weather-display {
@@ -1502,6 +1544,19 @@ body {
         display: flex;
     }
     
+    .ticker-container {
+        top: 70px;
+    }
+    
+    .ticker-content {
+        font-size: 0.8rem;
+        animation-duration: 45s;
+    }
+    
+    .ticker-separator {
+        margin: 0 1rem;
+    }
+    
     .hero-container {
         grid-template-columns: 1fr;
         text-align: center;
@@ -1604,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(rotateBanner, 5000);
     }
     
-    // Time and weather display (homepage only)
+    // Time and weather display (now in ticker)
     if (document.getElementById('current-time')) {
         updateTimeAndWeather();
         setInterval(updateTime, 1000);
