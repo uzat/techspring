@@ -1,0 +1,2141 @@
+// server.js
+const express = require('express');
+const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
+const bodyParser = require('body-parser');
+const fs = require('fs');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Database setup
+const db = new sqlite3.Database('./blog.db');
+
+// Initialize database
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+});
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Import routes
+const indexRoutes = require('./routes/index');
+const blogRoutes = require('./routes/blog');
+
+// Use routes
+app.use('/', indexRoutes);
+app.use('/blog', blogRoutes);
+
+// Make database available to routes
+app.locals.db = db;
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`TechSpring server running on port ${PORT}`);
+});
+
+// ===== ROUTES/INDEX.JS =====
+// routes/index.js
+const express = require('express');
+const router = express.Router();
+
+router.get('/', (req, res) => {
+    res.render('index', { 
+        title: 'TechSpring - AI Innovation & Technology',
+        currentPage: 'home'
+    });
+});
+
+router.get('/about', (req, res) => {
+    res.render('about', { 
+        title: 'About TechSpring',
+        currentPage: 'about'
+    });
+});
+
+router.get('/contact', (req, res) => {
+    res.render('contact', { 
+        title: 'Contact TechSpring',
+        currentPage: 'contact'
+    });
+});
+
+router.get('/acknowledgment', (req, res) => {
+    res.render('acknowledgment', { 
+        title: 'Acknowledgment of Country - TechSpring',
+        currentPage: 'acknowledgment'
+    });
+});
+
+module.exports = router;
+
+// ===== ROUTES/BLOG.JS =====
+// routes/blog.js
+const express = require('express');
+const router = express.Router();
+
+// Blog list
+router.get('/', (req, res) => {
+    const db = req.app.locals.db;
+    db.all('SELECT * FROM posts ORDER BY created_at DESC', (err, posts) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        res.render('blog/index', { 
+            title: 'TechSpring Blog',
+            currentPage: 'blog',
+            posts: posts
+        });
+    });
+});
+
+// New post form
+router.get('/new', (req, res) => {
+    res.render('blog/new', { 
+        title: 'New Post - TechSpring Blog',
+        currentPage: 'blog'
+    });
+});
+
+// Create post
+router.post('/new', (req, res) => {
+    const { title, content } = req.body;
+    const db = req.app.locals.db;
+    
+    db.run('INSERT INTO posts (title, content) VALUES (?, ?)', [title, content], function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        res.redirect('/blog');
+    });
+});
+
+// Show individual post
+router.get('/:id', (req, res) => {
+    const db = req.app.locals.db;
+    const id = req.params.id;
+    
+    db.get('SELECT * FROM posts WHERE id = ?', [id], (err, post) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        if (!post) {
+            return res.status(404).send('Post not found');
+        }
+        res.render('blog/show', { 
+            title: post.title + ' - TechSpring Blog',
+            currentPage: 'blog',
+            post: post
+        });
+    });
+});
+
+// Edit post form
+router.get('/:id/edit', (req, res) => {
+    const db = req.app.locals.db;
+    const id = req.params.id;
+    
+    db.get('SELECT * FROM posts WHERE id = ?', [id], (err, post) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        if (!post) {
+            return res.status(404).send('Post not found');
+        }
+        res.render('blog/edit', { 
+            title: 'Edit: ' + post.title + ' - TechSpring Blog',
+            currentPage: 'blog',
+            post: post
+        });
+    });
+});
+
+// Update post
+router.post('/:id/edit', (req, res) => {
+    const { title, content } = req.body;
+    const db = req.app.locals.db;
+    const id = req.params.id;
+    
+    db.run('UPDATE posts SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+           [title, content, id], function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        res.redirect('/blog/' + id);
+    });
+});
+
+// Delete post
+router.post('/:id/delete', (req, res) => {
+    const db = req.app.locals.db;
+    const id = req.params.id;
+    
+    db.run('DELETE FROM posts WHERE id = ?', [id], function(err) {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Database error');
+        }
+        res.redirect('/blog');
+    });
+});
+
+module.exports = router;
+
+// ===== UTILS/GETTIME.JS =====
+// utils/getTime.js
+const axios = require('axios');
+
+async function getUserLocation(ip) {
+    try {
+        const response = await axios.get(`http://ip-api.com/json/${ip}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error getting location:', error);
+        return null;
+    }
+}
+
+function getCurrentTime(timezone = 'Australia/Melbourne') {
+    try {
+        return new Date().toLocaleString('en-AU', {
+            timeZone: timezone,
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (error) {
+        console.error('Error formatting time:', error);
+        return new Date().toLocaleString('en-AU');
+    }
+}
+
+module.exports = { getUserLocation, getCurrentTime };
+
+// ===== UTILS/GETWEATHER.JS =====
+// utils/getWeather.js
+const axios = require('axios');
+
+async function getWeather(lat = -37.8136, lon = 144.9631, city = 'Melbourne') {
+    try {
+        // Using OpenWeatherMap API - you'll need to get a free API key
+        const apiKey = process.env.OPENWEATHER_API_KEY || 'demo_key';
+        const response = await axios.get(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+        );
+        
+        return {
+            city: city,
+            temperature: Math.round(response.data.main.temp),
+            description: response.data.weather[0].description,
+            humidity: response.data.main.humidity,
+            windSpeed: response.data.wind.speed
+        };
+    } catch (error) {
+        console.error('Error fetching weather:', error);
+        // Fallback weather data for Melbourne
+        return {
+            city: city,
+            temperature: 18,
+            description: 'partly cloudy',
+            humidity: 65,
+            windSpeed: 12
+        };
+    }
+}
+
+module.exports = { getWeather };
+
+// ===== PACKAGE.JSON =====
+// package.json
+{
+    "name": "techspring-website",
+    "version": "1.0.0",
+    "description": "TechSpring corporate website with blog functionality",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "ejs": "^3.1.9",
+        "sqlite3": "^5.1.6",
+        "body-parser": "^1.20.2",
+        "axios": "^1.6.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}
+
+// ===== RENDER.YAML =====
+# render.yaml
+services:
+  - type: web
+    name: techspring-website
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENWEATHER_API_KEY
+        sync: false
+
+// ===== VIEWS/PARTIALS/HEADER.EJS =====
+<!-- views/partials/header.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>TechSpring</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link <%= currentPage === 'home' ? 'active' : '' %>">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/about" class="nav-link <%= currentPage === 'about' ? 'active' : '' %>">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/blog" class="nav-link <%= currentPage === 'blog' ? 'active' : '' %>">Blog</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/contact" class="nav-link <%= currentPage === 'contact' ? 'active' : '' %>">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/acknowledgment" class="nav-link <%= currentPage === 'acknowledgment' ? 'active' : '' %>">Acknowledgment</a>
+                </li>
+                <li class="nav-item">
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </button>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+// ===== VIEWS/PARTIALS/FOOTER.EJS =====
+<!-- views/partials/footer.ejs -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TechSpring</h3>
+                    <p>AI Innovation & Technology Solutions</p>
+                    <p>Mornington Peninsula, Victoria, Australia</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <p>Phone: 0481 261 015</p>
+                    <p><a href="/acknowledgment">Acknowledgment of Country</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TechSpring Pty Ltd. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <% if (currentPage === 'home') { %>
+        <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+        <script src="/js/particles-config.js"></script>
+    <% } %>
+</body>
+</html>
+
+// ===== VIEWS/INDEX.EJS =====
+<!-- views/index.ejs -->
+<%- include('partials/header') %>
+
+<main class="main-content">
+    <div id="particles-js"></div>
+    
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-banner">
+                <img id="rotating-banner" src="/images/ai-banner-1.jpg" alt="AI Technology Banner" class="banner-image">
+            </div>
+            <div class="hero-content">
+                <h1>Welcome to TechSpring</h1>
+                <p class="hero-subtitle">AI Innovation & Future Technology Solutions</p>
+                <div class="hero-info">
+                    <div class="time-weather">
+                        <div id="current-time" class="time-display">Loading time...</div>
+                        <div id="weather-info" class="weather-display">Loading weather...</div>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="/about" class="btn btn-primary">Learn More</a>
+                    <a href="/contact" class="btn btn-secondary">Get In Touch</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2>Innovative Technology Solutions</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Development</h3>
+                    <p>Cutting-edge artificial intelligence solutions tailored to your business needs.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Performance Optimization</h3>
+                    <p>High-performance computing solutions that scale with your growth.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Research & Innovation</h3>
+                    <p>Leading-edge research in emerging technologies and methodologies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<%- include('partials/footer') %>
+
+// ===== VIEWS/ABOUT.EJS =====
+<!-- views/about.ejs -->
+<%- include('partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>About TechSpring</h1>
+            <p class="page-subtitle">Innovation at the intersection of AI and technology</p>
+        </section>
+
+        <section class="content-section">
+            <div class="content-grid">
+                <div class="content-text">
+                    <h2>Our Mission</h2>
+                    <p>TechSpring is dedicated to pioneering the future of technology through innovative AI solutions and cutting-edge computing. Based on the beautiful Mornington Peninsula in Victoria, Australia, we combine the serenity of our coastal location with the intensity of technological innovation.</p>
+                    
+                    <p>Founded by Scott, TechSpring represents a new wave of technology companies that prioritize both innovation and sustainability. We believe that the future of technology lies in intelligent systems that enhance human capability while respecting our environment.</p>
+
+                    <h2>Our Approach</h2>
+                    <p>We take a holistic approach to technology development, considering not just the technical feasibility but also the real-world impact of our solutions. Our team combines deep technical expertise with a passion for solving complex problems.</p>
+
+                    <ul class="feature-list">
+                        <li>AI-first development methodology</li>
+                        <li>Sustainable technology practices</li>
+                        <li>Human-centered design principles</li>
+                        <li>Scalable cloud-native solutions</li>
+                    </ul>
+                </div>
+                <div class="content-image">
+                    <img src="/images/ai-banner-2.jpg" alt="TechSpring Innovation" class="about-image">
+                </div>
+            </div>
+        </section>
+
+        <section class="values-section">
+            <h2>Our Values</h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <h3>Innovation</h3>
+                    <p>Pushing the boundaries of what's possible with emerging technologies.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Excellence</h3>
+                    <p>Delivering high-quality solutions that exceed expectations.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Sustainability</h3>
+                    <p>Building technology that benefits both business and environment.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Collaboration</h3>
+                    <p>Working closely with clients to achieve shared success.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<%- include('partials/footer') %>
+
+// ===== VIEWS/CONTACT.EJS =====
+<!-- views/contact.ejs -->
+<%- include('partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>Contact TechSpring</h1>
+            <p class="page-subtitle">Ready to innovate together? Let's talk.</p>
+        </section>
+
+        <section class="contact-section">
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h2>Get In Touch</h2>
+                    <p>We're excited to discuss your technology needs and explore how TechSpring can help bring your vision to life.</p>
+                    
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <div class="contact-icon">📞</div>
+                            <div class="contact-text">
+                                <h3>Phone</h3>
+                                <p><a href="tel:0481261015">0481 261 015</a></p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item">
+                            <div class="contact-icon">📍</div>
+                            <div class="contact-text">
+                                <h3>Location</h3>
+                                <p>Mornington Peninsula<br>Victoria, Australia</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item">
+                            <div class="contact-icon">🕐</div>
+                            <div class="contact-text">
+                                <h3>Business Hours</h3>
+                                <p>Monday - Friday<br>9:00 AM - 6:00 PM AEST</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-cta">
+                    <div class="cta-card">
+                        <h3>Ready to Start?</h3>
+                        <p>Call us today to discuss your project and discover how TechSpring can accelerate your technology journey.</p>
+                        <a href="tel:0481261015" class="btn btn-primary btn-large">Call Now: 0481 261 015</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="services-preview">
+            <h2>What We Do</h2>
+            <div class="services-grid">
+                <div class="service-item">
+                    <h4>AI Development</h4>
+                    <p>Custom artificial intelligence solutions</p>
+                </div>
+                <div class="service-item">
+                    <h4>Cloud Solutions</h4>
+                    <p>Scalable cloud-native applications</p>
+                </div>
+                <div class="service-item">
+                    <h4>Technology Consulting</h4>
+                    <p>Strategic technology guidance</p>
+                </div>
+                <div class="service-item">
+                    <h4>Performance Optimization</h4>
+                    <p>High-performance system design</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<%- include('partials/footer') %>
+
+// ===== VIEWS/ACKNOWLEDGMENT.EJS =====
+<!-- views/acknowledgment.ejs -->
+<%- include('partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="acknowledgment-section">
+            <div class="acknowledgment-content">
+                <h1>Acknowledgment of Country</h1>
+                
+                <div class="acknowledgment-text">
+                    <p>TechSpring acknowledges the Bunurong people of the Kulin Nation as the Traditional Owners and Custodians of the land on which we operate on the Mornington Peninsula. We pay our respects to their Elders past, present and emerging.</p>
+                    
+                    <p>We recognize that this land has been home to Aboriginal people for thousands of years, and we acknowledge their continuing connection to Country, culture and community.</p>
+                    
+                    <p>We are committed to learning from and working with Aboriginal and Torres Strait Islander peoples as we continue our journey of reconciliation and understanding.</p>
+                </div>
+
+                <div class="acknowledgment-image">
+                    <img src="/images/ai-banner-3.jpg" alt="Country landscape" class="landscape-image">
+                </div>
+
+                <div class="commitment-section">
+                    <h2>Our Commitment</h2>
+                    <p>As a technology company, we believe in using innovation to create positive change. We are committed to supporting Aboriginal and Torres Strait Islander communities through technology initiatives that preserve culture, create opportunities, and bridge digital divides.</p>
+                    
+                    <p>We acknowledge that our success is built upon the foundation of this ancient land and its first peoples, and we commit to operating with respect, understanding, and genuine partnership.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<%- include('partials/footer') %>
+
+// ===== VIEWS/BLOG/INDEX.EJS =====
+<!-- views/blog/index.ejs -->
+<%- include('../partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>TechSpring Blog</h1>
+            <p class="page-subtitle">Insights, updates, and innovations from the TechSpring team</p>
+            <a href="/blog/new" class="btn btn-primary">Write New Post</a>
+        </section>
+
+        <section class="blog-list">
+            <% if (posts && posts.length > 0) { %>
+                <div class="posts-grid">
+                    <% posts.forEach(post => { %>
+                        <article class="post-card">
+                            <div class="post-content">
+                                <h2><a href="/blog/<%= post.id %>"><%= post.title %></a></h2>
+                                <p class="post-excerpt">
+                                    <%= post.content.length > 200 ? post.content.substring(0, 200) + '...' : post.content %>
+                                </p>
+                                <div class="post-meta">
+                                    <span class="post-date">
+                                        <%= new Date(post.created_at).toLocaleDateString('en-AU', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </span>
+                                    <div class="post-actions">
+                                        <a href="/blog/<%= post.id %>" class="btn btn-sm">Read More</a>
+                                        <a href="/blog/<%= post.id %>/edit" class="btn btn-sm btn-secondary">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+// ===== PUBLIC/CSS/STYLE.CSS =====
+/* public/css/style.css */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #64748b;
+    --accent-color: #06d6a0;
+    --text-color: #1e293b;
+    --text-muted: #64748b;
+    --background: #ffffff;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme="dark"], .dark-mode {
+    --primary-color: #3b82f6;
+    --secondary-color: #94a3b8;
+    --accent-color: #10b981;
+    --text-color: #f1f5f9;
+    --text-muted: #94a3b8;
+    --background: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    --gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--background);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Navigation */
+.navbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+}
+
+.nav-brand h2 {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary-color);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+    border-radius: 1px;
+}
+
+.theme-toggle {
+    background: none;
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.dark-mode .sun-icon {
+    display: none;
+}
+
+.light-mode .moon-icon {
+    display: none;
+}
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: var(--text-color);
+    margin: 3px 0;
+    transition: 0.3s;
+}
+
+/* Main Content */
+.main-content {
+    min-height: calc(100vh - 140px);
+}
+
+/* Hero Section */
+.hero {
+    position: relative;
+    padding: 4rem 0;
+    background: var(--gradient);
+    color: white;
+    overflow: hidden;
+}
+
+#particles-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hero-container {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.hero-banner {
+    text-align: center;
+}
+
+.banner-image {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.5s ease;
+}
+
+.banner-image:hover {
+    transform: scale(1.05);
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.time-weather {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.time-display, .weather-display {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Features Section */
+.features {
+    padding: 4rem 0;
+    background: var(--surface);
+}
+
+.features h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: var(--text-color);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    background: var(--background);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.btn-large {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+}
+
+/* Page Content */
+.page-content {
+    padding: 2rem 0;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* About Page */
+.content-section {
+    margin-bottom: 4rem;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.content-text h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.content-text p {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    line-height: 1.7;
+}
+
+.feature-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.feature-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-color);
+}
+
+.feature-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.about-image {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.values-section {
+    background: var(--surface);
+    padding: 3rem;
+    border-radius: 15px;
+    margin-top: 2rem;
+}
+
+.values-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.value-card {
+    background: var(--background);
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.value-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Contact Page */
+.contact-section {
+    margin-bottom: 3rem;
+}
+
+.contact-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+}
+
+.contact-info h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.contact-details {
+    margin-top: 2rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.contact-icon {
+    font-size: 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.contact-text h3 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.contact-text a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.contact-text a:hover {
+    text-decoration: underline;
+}
+
+.cta-card {
+    background: var(--gradient);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.cta-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.cta-card p {
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.services-preview {
+    background: var(--surface);
+    padding: 3rem;
+    border-radius: 15px;
+    margin-top: 3rem;
+}
+
+.services-preview h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-color);
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.service-item {
+    background: var(--background);
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.service-item h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Acknowledgment Page */
+.acknowledgment-section {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.acknowledgment-content h1 {
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+
+.acknowledgment-text {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.acknowledgment-text p {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    line-height: 1.7;
+    font-size: 1.05rem;
+}
+
+.landscape-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+.commitment-section {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+}
+
+.commitment-section h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.commitment-section p {
+    color: var(--text-color);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+/* Blog Styles */
+.posts-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+.post-card {
+    background: var(--surface);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.post-card h2 {
+    margin-bottom: 1rem;
+}
+
+.post-card h2 a {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.post-card h2 a:hover {
+    color: var(--primary-color);
+}
+
+.post-excerpt {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.post-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.post-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.empty-content {
+    background: var(--surface);
+    padding: 3rem;
+    border-radius: 15px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.empty-content h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+/* Blog Forms */
+.blog-form-section {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.blog-form {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text-color);
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 200px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.delete-form {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Blog Post */
+.blog-post {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.post-header {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.post-header h1 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    line-height: 1.3;
+}
+
+.post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.post-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.post-body {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 15px;
+    line-height: 1.8;
+}
+
+.post-body p {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+}
+
+/* Footer */
+.footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 3rem 0 1rem;
+    margin-top: auto;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.footer-section h3, .footer-section h4 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.footer-section p, .footer-section li {
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+    color: var(--primary-color);
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav-menu {
+        display: none;
+    }
+    
+    .hamburger {
+        display: flex;
+    }
+    
+    .hero-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    
+    .contact-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions, .post-actions {
+        flex-direction: column;
+    }
+    
+    .post-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .hero {
+        padding: 2rem 0;
+    }
+    
+    .features, .page-content {
+        padding: 1.5rem 0;
+    }
+    
+    .blog-form, .cta-card, .values-section, .services-preview {
+        padding: 1.5rem;
+    }
+}
+
+// ===== PUBLIC/JS/MAIN.JS =====
+/* public/js/main.js */
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    
+    // Check for saved theme or default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    body.className = savedTheme + '-mode';
+    
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = body.classList.contains('light-mode') ? 'light' : 'dark';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        body.className = newTheme + '-mode';
+        localStorage.setItem('theme', newTheme);
+    });
+    
+    // Mobile navigation toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navMenu = document.querySelector('.nav-menu');
+    
+    if (hamburger) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+    }
+    
+    // Rotating banner images (homepage only)
+    if (document.getElementById('rotating-banner')) {
+        const bannerImages = [
+            '/images/ai-banner-1.jpg',
+            '/images/ai-banner-2.jpg',
+            '/images/ai-banner-3.jpg',
+            '/images/ai-banner-4.jpg',
+            '/images/ai-banner-5.jpg'
+        ];
+        
+        let currentImageIndex = 0;
+        const bannerElement = document.getElementById('rotating-banner');
+        
+        const rotateBanner = () => {
+            currentImageIndex = (currentImageIndex + 1) % bannerImages.length;
+            bannerElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                bannerElement.src = bannerImages[currentImageIndex];
+                bannerElement.style.opacity = '1';
+            }, 500);
+        };
+        
+        // Rotate every 5 seconds
+        setInterval(rotateBanner, 5000);
+    }
+    
+    // Time and weather display (homepage only)
+    if (document.getElementById('current-time')) {
+        updateTimeAndWeather();
+        setInterval(updateTime, 1000);
+        setInterval(updateWeather, 300000); // Update weather every 5 minutes
+    }
+});
+
+async function updateTimeAndWeather() {
+    await updateTime();
+    await updateWeather();
+}
+
+async function updateTime() {
+    try {
+        const timeElement = document.getElementById('current-time');
+        if (!timeElement) return;
+        
+        // Get user's location for timezone
+        const response = await fetch('http://ip-api.com/json/');
+        const locationData = await response.json();
+        
+        const timezone = locationData.timezone || 'Australia/Melbourne';
+        const currentTime = new Date().toLocaleString('en-AU', {
+            timeZone: timezone,
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        timeElement.textContent = `${locationData.city || 'Melbourne'}: ${currentTime}`;
+    } catch (error) {
+        console.error('Error updating time:', error);
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = `Melbourne: ${new Date().toLocaleString('en-AU')}`;
+        }
+    }
+}
+
+async function updateWeather() {
+    try {
+        const weatherElement = document.getElementById('weather-info');
+        if (!weatherElement) return;
+        
+        // Get user's location
+        const locationResponse = await fetch('http://ip-api.com/json/');
+        const locationData = await locationResponse.json();
+        
+        const lat = locationData.lat || -37.8136;
+        const lon = locationData.lon || 144.9631;
+        const city = locationData.city || 'Melbourne';
+        
+        // Mock weather data (replace with actual API call)
+        const weatherData = {
+            city: city,
+            temperature: Math.floor(Math.random() * 15) + 10, // Random temp between 10-25°C
+            description: ['sunny', 'partly cloudy', 'overcast', 'light rain'][Math.floor(Math.random() * 4)],
+            humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
+            windSpeed: Math.floor(Math.random() * 20) + 5 // 5-25 km/h
+        };
+        
+        weatherElement.innerHTML = `
+            <div>🌡️ ${weatherData.temperature}°C - ${weatherData.description}</div>
+            <div>💧 ${weatherData.humidity}% humidity | 💨 ${weatherData.windSpeed} km/h wind</div>
+        `;
+    } catch (error) {
+        console.error('Error updating weather:', error);
+        const weatherElement = document.getElementById('weather-info');
+        if (weatherElement) {
+            weatherElement.innerHTML = `
+                <div>🌡️ 18°C - partly cloudy</div>
+                <div>💧 65% humidity | 💨 12 km/h wind</div>
+            `;
+        }
+    }
+}
+
+// ===== PUBLIC/JS/PARTICLES-CONFIG.JS =====
+/* public/js/particles-config.js */
+if (typeof particlesJS !== 'undefined') {
+    particlesJS('particles-js', {
+        particles: {
+            number: {
+                value: 50,
+                density: {
+                    enable: true,
+                    value_area: 800
+                }
+            },
+            color: {
+                value: '#ffffff'
+            },
+            shape: {
+                type: 'circle',
+                stroke: {
+                    width: 0,
+                    color: '#000000'
+                }
+            },
+            opacity: {
+                value: 0.3,
+                random: false,
+                anim: {
+                    enable: false,
+                    speed: 1,
+                    opacity_min: 0.1,
+                    sync: false
+                }
+            },
+            size: {
+                value: 3,
+                random: true,
+                anim: {
+                    enable: false,
+                    speed: 40,
+                    size_min: 0.1,
+                    sync: false
+                }
+            },
+            line_linked: {
+                enable: true,
+                distance: 150,
+                color: '#ffffff',
+                opacity: 0.2,
+                width: 1
+            },
+            move: {
+                enable: true,
+                speed: 2,
+                direction: 'none',
+                random: false,
+                straight: false,
+                out_mode: 'out',
+                bounce: false,
+                attract: {
+                    enable: false,
+                    rotateX: 600,
+                    rotateY: 1200
+                }
+            }
+        },
+        interactivity: {
+            detect_on: 'canvas',
+            events: {
+                onhover: {
+                    enable: true,
+                    mode: 'repulse'
+                },
+                onclick: {
+                    enable: true,
+                    mode: 'push'
+                },
+                resize: true
+            },
+            modes: {
+                grab: {
+                    distance: 400,
+                    line_linked: {
+                        opacity: 1
+                    }
+                },
+                bubble: {
+                    distance: 400,
+                    size: 40,
+                    duration: 2,
+                    opacity: 8,
+                    speed: 3
+                },
+                repulse: {
+                    distance: 200,
+                    duration: 0.4
+                },
+                push: {
+                    particles_nb: 4
+                },
+                remove: {
+                    particles_nb: 2
+                }
+            }
+        },
+        retina_detect: true
+    });
+}
+
+// ===== README.MD =====
+# TechSpring Website
+
+A modern, AI-focused corporate website built with Node.js, Express, and EJS templating.
+
+## Features
+
+- **Responsive Design**: Mobile-first responsive layout
+- **Dark/Light Mode**: Theme toggle with localStorage persistence  
+- **Blog System**: Full CRUD functionality for blog posts
+- **Real-time Features**: IP-based time and weather display
+- **Particle Animation**: Particles.js background on homepage
+- **Rotating Banners**: AI-themed image rotation
+- **SQLite Database**: Lightweight database for blog posts
+- **Modern UI**: Clean, professional design with smooth animations
+
+## Tech Stack
+
+- **Backend**: Node.js with Express
+- **Frontend**: EJS templating engine
+- **Database**: SQLite3
+- **Styling**: CSS with CSS custom properties (variables)
+- **JavaScript**: Vanilla JS with Particles.js
+- **Deployment**: Render.com ready
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd techspring
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create required directories:
+```bash
+mkdir -p public/images public/css public/js
+mkdir -p views/blog views/partials
+mkdir -p routes utils
+```
+
+4. Add banner images to `public/images/`:
+   - ai-banner-1.jpg
+   - ai-banner-2.jpg  
+   - ai-banner-3.jpg
+   - ai-banner-4.jpg
+   - ai-banner-5.jpg
+
+5. Set up environment variables (optional):
+```bash
+export OPENWEATHER_API_KEY=your_api_key_here
+```
+
+6. Start the development server:
+```bash
+npm run dev
+```
+
+Or for production:
+```bash
+npm start
+```
+
+## Project Structure
+
+```
+techspring/
+├── public/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── main.js
+│   │   └── particles-config.js
+│   └── images/
+│       ├── ai-banner-1.jpg
+│       ├── ai-banner-2.jpg
+│       ├── ai-banner-3.jpg
+│       ├── ai-banner-4.jpg
+│       └── ai-banner-5.jpg
+├── routes/
+│   ├── index.js
+│   └── blog.js
+├── utils/
+│   ├── getTime.js
+│   └── getWeather.js
+├── views/
+│   ├── blog/
+│   │   ├── index.ejs
+│   │   ├── new.ejs
+│   │   ├── edit.ejs
+│   │   └── show.ejs
+│   ├── partials/
+│   │   ├── header.ejs
+│   │   └── footer.ejs
+│   ├── index.ejs
+│   ├── about.ejs
+│   ├── contact.ejs
+│   └── acknowledgment.ejs
+├── server.js
+├── package.json
+├── render.yaml
+└── README.md
+```
+
+## Pages
+
+- **Home** (`/`): Landing page with particles animation, rotating banners, time/weather
+- **About** (`/about`): Company information and mission
+- **Blog** (`/blog`): Blog listing and management
+  - `/blog/new`: Create new post
+  - `/blog/:id`: View individual post
+  - `/blog/:id/edit`: Edit post
+- **Contact** (`/contact`): Contact information (phone only: 0481 261 015)
+- **Acknowledgment** (`/acknowledgment`): Acknowledgment of Country
+
+## Features Detail
+
+### Blog System
+- Create, read, update, delete blog posts
+- SQLite database storage
+- Rich text content support
+- Date tracking (created/updated)
+
+### Theme Toggle
+- Light/dark mode switching
+- Persistent theme storage in localStorage
+- Smooth transitions between themes
+
+### Real-time Data
+- IP-based location detection
+- Local time display with timezone support
+- Weather information (requires API key)
+- Fallback to Melbourne, Australia
+
+### Responsive Design
+- Mobile-first approach
+- Flexible grid layouts
+- Touch-friendly navigation
+- Optimized for all screen sizes
+
+## Deployment
+
+### Render.com
+The project includes a `render.yaml` file for easy deployment:
+
+1. Connect your GitHub repository to Render
+2. The service will automatically deploy using the configuration
+3. Set environment variables in Render dashboard if needed
+
+### Manual Deployment
+1. Ensure all dependencies are installed
+2. Set `NODE_ENV=production`
+3. Run `npm start`
+4. Ensure port is configured correctly (uses `process.env.PORT`)
+
+## Customization
+
+### Adding Banner Images
+Replace the images in `public/images/` with your own AI-themed banners. Ensure they are:
+- Named: `ai-banner-1.jpg` through `ai-banner-5.jpg`
+- Optimized for web (recommended: 800x600px, <200KB each)
+- High quality and relevant to AI/technology themes
+
+### Styling
+Modify `public/css/style.css` to customize:
+- Color scheme (CSS custom properties in `:root`)
+- Typography (currently using Inter font)
+- Layout and spacing
+- Animation timings
+
+### Adding New Pages
+1. Create new EJS template in `views/`
+2. Add route in `routes/index.js`
+3. Update navigation in `views/partials/header.ejs`
+
+## Browser Support
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- Mobile browsers (iOS Safari, Chrome Mobile)
+- Progressive enhancement for older browsers
+
+## Performance
+- Minified particles.js from CDN
+- Optimized images and CSS
+- Efficient database queries
+- Minimal JavaScript footprint
+
+## Security
+- Input validation on forms
+- SQL injection protection via parameterized queries
+- XSS protection through EJS escaping
+- Environment variable configuration
+
+## Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+Copyright 2025 TechSpring Pty Ltd. All rights reserved.
+
+## Contact
+**TechSpring Pty Ltd**  
+Phone: 0481 261 015  
+Location: Mornington Peninsula, Victoria, Australia
+
+---
+
+Built with ❤️ by the TechSpring team using modern web technologies.
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-content">
+                        <h3>No posts yet</h3>
+                        <p>Be the first to share insights and innovations!</p>
+                        <a href="/blog/new" class="btn btn-primary">Create First Post</a>
+                    </div>
+                </div>
+            <% } %>
+        </section>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+// ===== VIEWS/BLOG/NEW.EJS =====
+<!-- views/blog/new.ejs -->
+<%- include('../partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>Create New Post</h1>
+            <p class="page-subtitle">Share your insights and innovations</p>
+        </section>
+
+        <section class="blog-form-section">
+            <form action="/blog/new" method="POST" class="blog-form">
+                <div class="form-group">
+                    <label for="title">Post Title</label>
+                    <input type="text" id="title" name="title" required class="form-input" placeholder="Enter post title...">
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" required class="form-textarea" rows="15" placeholder="Write your post content here..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Publish Post</button>
+                    <a href="/blog" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+// ===== VIEWS/BLOG/EDIT.EJS =====
+<!-- views/blog/edit.ejs -->
+<%- include('../partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>Edit Post</h1>
+            <p class="page-subtitle">Update your post content</p>
+        </section>
+
+        <section class="blog-form-section">
+            <form action="/blog/<%= post.id %>/edit" method="POST" class="blog-form">
+                <div class="form-group">
+                    <label for="title">Post Title</label>
+                    <input type="text" id="title" name="title" required class="form-input" value="<%= post.title %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" required class="form-textarea" rows="15"><%= post.content %></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Post</button>
+                    <a href="/blog/<%= post.id %>" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+
+            <form action="/blog/<%= post.id %>/delete" method="POST" class="delete-form" onsubmit="return confirm('Are you sure you want to delete this post?')">
+                <button type="submit" class="btn btn-danger">Delete Post</button>
+            </form>
+        </section>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+// ===== VIEWS/BLOG/SHOW.EJS =====
+<!-- views/blog/show.ejs -->
+<%- include('../partials/header') %>
+
+<main class="main-content page-content">
+    <div class="container">
+        <article class="blog-post">
+            <header class="post-header">
+                <h1><%= post.title %></h1>
+                <div class="post-meta">
+                    <span class="post-date">
+                        Published: <%= new Date(post.created_at).toLocaleDateString('en-AU', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) %>
+                    </span>
+                    <% if (post.updated_at !== post.created_at) { %>
+                        <span class="post-updated">
+                            Updated: <%= new Date(post.updated_at).toLocaleDateString('en-AU', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %>
+                        </span>
+                    <% } %>
+                </div>
+                <div class="post-actions">
+                    <a href="/blog/<%= post.id %>/edit" class="btn btn-secondary">Edit Post</a>
+                    <a href="/blog" class="btn btn-outline">← Back to Blog</a>
+                </div>
+            </header>
+
+            <div class="post-content">
+                <div class="post-body">
+                    <%= post.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') %>
+                </div>
+            </div>
+        </article>

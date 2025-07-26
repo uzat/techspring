@@ -1,47 +1,46 @@
 // server.js
 const express = require('express');
-const mongoose = require('mongoose');
 const path = require('path');
-const dotenv = require('dotenv');
+const sqlite3 = require('sqlite3').verbose();
+const bodyParser = require('body-parser');
+const fs = require('fs');
+
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-dotenv.config();
+// Database setup
+const db = new sqlite3.Database('./blog.db');
 
-// View engine
+// Initialize database
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+});
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true }));
-
-// Utils (weather + time handled in route files)
+// Import routes
 const indexRoutes = require('./routes/index');
-const blogRoutes = require('./routes/blogs');
+const blogRoutes = require('./routes/blog');
 
-// Routes
+// Use routes
 app.use('/', indexRoutes);
-app.use('/blogs', blogRoutes);
+app.use('/blog', blogRoutes);
 
-// 404 fallback
-app.use((req, res) => {
-  res.status(404).render('404', { title: '404 – Page Not Found' });
-});
+// Make database available to routes
+app.locals.db = db;
 
-// MongoDB connection + server start
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/techspring';
-
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-})
-.catch((err) => {
-  console.error('MongoDB connection error:', err);
+// Start server
+app.listen(PORT, () => {
+    console.log(`TechSpring server running on port ${PORT}`);
 });

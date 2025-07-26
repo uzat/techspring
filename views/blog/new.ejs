@@ -1,21 +1,33 @@
+// ===== VIEWS/BLOG/NEW.EJS =====
 <!-- views/blog/new.ejs -->
-<%- include("../partials/header") %>
+<%- include('../partials/header') %>
 
-<section class="page">
-  <h1>New Blog Post</h1>
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>Create New Post</h1>
+            <p class="page-subtitle">Share your insights and innovations</p>
+        </section>
 
-  <form action="/blog" method="POST">
-    <label for="title">Title</label>
-    <input type="text" name="title" required />
+        <section class="blog-form-section">
+            <form action="/blog/new" method="POST" class="blog-form">
+                <div class="form-group">
+                    <label for="title">Post Title</label>
+                    <input type="text" id="title" name="title" required class="form-input" placeholder="Enter post title...">
+                </div>
 
-    <label for="excerpt">Excerpt</label>
-    <textarea name="excerpt" rows="3" required></textarea>
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" required class="form-textarea" rows="15" placeholder="Write your post content here..."></textarea>
+                </div>
 
-    <label for="body">Body</label>
-    <textarea name="body" rows="10" required></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Publish Post</button>
+                    <a href="/blog" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
 
-    <button type="submit">Publish</button>
-  </form>
-</section>
-
-<%- include("../partials/footer") %>
+<%- include('../partials/footer') %>

@@ -1,42 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="Techspring – Innovative AI, computing, and future-tech company based in Australia.">
-  <title>Techspring</title>
-  <link rel="stylesheet" href="/css/style.css" />
-</head>
-<body class="light">
+// ===== VIEWS/INDEX.EJS =====
+<!-- views/index.ejs -->
+<%- include('partials/header') %>
 
-  <% include partials/header %>
-
-  <div id="hero">
+<main class="main-content">
     <div id="particles-js"></div>
-    <div class="hero-content">
-      <h1>Welcome to Techspring</h1>
-      <p>Driving the future of AI and smart computing in Australia.</p>
-    </div>
-  </div>
-
-  <div class="info-bar">
-    <span>🕒 <%= localTime %></span>
-    <span> | </span>
-    <span><%= weather %></span>
-  </div>
-
-  <main class="content">
-    <section>
-      <h2>What We Do</h2>
-      <p>Techspring is a forward-thinking innovation hub focused on artificial intelligence, cloud automation, and digital product development.</p>
+    <script src="/js/theme-toggle.js"></script>
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-banner">
+                <img id="rotating-banner" src="/images/ai-banner-1.jpg" alt="AI Technology Banner" class="banner-image">
+            </div>
+            <div class="hero-content">
+                <h1>Welcome to TechSpring</h1>
+                <p class="hero-subtitle">AI Innovation & Future Technology Solutions</p>
+                <div class="hero-info">
+                    <div class="time-weather">
+                        <div id="current-time" class="time-display">Loading time...</div>
+                        <div id="weather-info" class="weather-display">Loading weather...</div>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a href="/about" class="btn btn-primary">Learn More</a>
+                    <a href="/contact" class="btn btn-secondary">Get In Touch</a>
+                </div>
+            </div>
+        </div>
     </section>
-  </main>
 
-  <% include partials/footer %>
+    <section class="features">
+        <div class="container">
+            <h2>Innovative Technology Solutions</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Development</h3>
+                    <p>Cutting-edge artificial intelligence solutions tailored to your business needs.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Performance Optimization</h3>
+                    <p>High-performance computing solutions that scale with your growth.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>Research & Innovation</h3>
+                    <p>Leading-edge research in emerging technologies and methodologies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
-  <script src="/js/particles-config.js"></script>
-  <script src="/js/theme-toggle.js"></script>
-</body>
-</html>
-// Content for index.ejs
+<%- include('partials/footer') %>

@@ -1,17 +1,43 @@
+// ===== VIEWS/BLOG/SHOW.EJS =====
 <!-- views/blog/show.ejs -->
-<%- include("../partials/header") %>
+<%- include('../partials/header') %>
 
-<section class="page">
-  <h1><%= post.title %></h1>
-  <p class="blog-meta">Posted <%= post.createdAt.toLocaleDateString() %></p>
-  <div class="blog-body">
-    <p><%= post.body %></p>
-  </div>
+<main class="main-content page-content">
+    <div class="container">
+        <article class="blog-post">
+            <header class="post-header">
+                <h1><%= post.title %></h1>
+                <div class="post-meta">
+                    <span class="post-date">
+                        Published: <%= new Date(post.created_at).toLocaleDateString('en-AU', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) %>
+                    </span>
+                    <% if (post.updated_at !== post.created_at) { %>
+                        <span class="post-updated">
+                            Updated: <%= new Date(post.updated_at).toLocaleDateString('en-AU', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) %>
+                        </span>
+                    <% } %>
+                </div>
+                <div class="post-actions">
+                    <a href="/blog/<%= post.id %>/edit" class="btn btn-secondary">Edit Post</a>
+                    <a href="/blog" class="btn btn-outline">← Back to Blog</a>
+                </div>
+            </header>
 
-  <a href="/blog/<%= post._id %>/edit" class="button">Edit</a>
-  <form action="/blog/<%= post._id %>?_method=DELETE" method="POST" style="display:inline;">
-    <button type="submit" class="button" style="background-color: #ff4444;">Delete</button>
-  </form>
-</section>
-
-<%- include("../partials/footer") %>
+            <div class="post-content">
+                <div class="post-body">
+                    <%= post.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('') %>
+                </div>
+            </div>
+        </article>

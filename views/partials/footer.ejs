@@ -1,7 +1,38 @@
+// ===== VIEWS/PARTIALS/FOOTER.EJS =====
 <!-- views/partials/footer.ejs -->
-<footer class="footer">
-  <div class="footer-content">
-    <p>&copy; <%= new Date().getFullYear() %> Techspring. All rights reserved.</p>
-    <p><a href="/acknowledgment">Acknowledgment of Country</a> | <a href="/contact">Contact</a></p>
-  </div>
-</footer>
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>TechSpring</h3>
+                    <p>AI Innovation & Technology Solutions</p>
+                    <p>Mornington Peninsula, Victoria, Australia</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <p>Phone: 0481 261 015</p>
+                    <p><a href="/acknowledgment">Acknowledgment of Country</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TechSpring Pty Ltd. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <% if (currentPage === 'home') { %>
+        <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+        <script src="/js/particles-config.js"></script>
+    <% } %>
+</body>
+</html>

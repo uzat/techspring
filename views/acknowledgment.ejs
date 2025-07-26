@@ -1,13 +1,34 @@
+// ===== VIEWS/ACKNOWLEDGMENT.EJS =====
 <!-- views/acknowledgment.ejs -->
-<%- include("partials/header") %>
+<%- include('partials/header') %>
 
-<section class="page">
-  <h1>Acknowledgment of Country</h1>
-  <p>Techspring acknowledges the Traditional Owners of the lands on which we live and work — the Bunurong people of the Kulin Nation, here on the Mornington Peninsula, and all Aboriginal and Torres Strait Islander peoples across Australia.</p>
+<main class="main-content page-content">
+    <div class="container">
+        <section class="acknowledgment-section">
+            <div class="acknowledgment-content">
+                <h1>Acknowledgment of Country</h1>
+                
+                <div class="acknowledgment-text">
+                    <p>TechSpring acknowledges the Bunurong people of the Kulin Nation as the Traditional Owners and Custodians of the land on which we operate on the Mornington Peninsula. We pay our respects to their Elders past, present and emerging.</p>
+                    
+                    <p>We recognize that this land has been home to Aboriginal people for thousands of years, and we acknowledge their continuing connection to Country, culture and community.</p>
+                    
+                    <p>We are committed to learning from and working with Aboriginal and Torres Strait Islander peoples as we continue our journey of reconciliation and understanding.</p>
+                </div>
 
-  <p>We pay our respects to Elders past and present, and we honour the enduring connection of Indigenous peoples to Country, culture, and community.</p>
+                <div class="acknowledgment-image">
+                    <img src="/images/ai-banner-3.jpg" alt="Country landscape" class="landscape-image">
+                </div>
 
-  <p>As an AI and technology business, we recognise our role in shaping futures — and we commit to listening, learning, and including Indigenous voices in the future we help build.</p>
-</section>
+                <div class="commitment-section">
+                    <h2>Our Commitment</h2>
+                    <p>As a technology company, we believe in using innovation to create positive change. We are committed to supporting Aboriginal and Torres Strait Islander communities through technology initiatives that preserve culture, create opportunities, and bridge digital divides.</p>
+                    
+                    <p>We acknowledge that our success is built upon the foundation of this ancient land and its first peoples, and we commit to operating with respect, understanding, and genuine partnership.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
 
-<%- include("partials/footer") %>
+<%- include('partials/footer') %>

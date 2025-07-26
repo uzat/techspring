@@ -1,12 +1,49 @@
-<header class="site-header">
-  <nav class="navbar">
-    <a href="/" class="<%= (typeof page !== 'undefined' && page === 'home') ? 'active' : '' %>">Home</a>
-    <a href="/contact" class="<%= (page === 'contact') ? 'active' : '' %>">Contact</a>
-    <a href="/country" class="<%= (page === 'country') ? 'active' : '' %>">Acknowledgment</a>
-    <a href="/blog" class="<%= (page === 'blog') ? 'active' : '' %>">Blog</a>
-
-    <div class="nav-right">
-      <button id="themeToggle" aria-label="Toggle light/dark mode">🌓</button>
-    </div>
-  </nav>
-</header>
+// ===== VIEWS/PARTIALS/HEADER.EJS =====
+<!-- views/partials/header.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="light-mode">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>TechSpring</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link <%= currentPage === 'home' ? 'active' : '' %>">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/about" class="nav-link <%= currentPage === 'about' ? 'active' : '' %>">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/blog" class="nav-link <%= currentPage === 'blog' ? 'active' : '' %>">Blog</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/contact" class="nav-link <%= currentPage === 'contact' ? 'active' : '' %>">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/acknowledgment" class="nav-link <%= currentPage === 'acknowledgment' ? 'active' : '' %>">Acknowledgment</a>
+                </li>
+                <li class="nav-item">
+                    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </button>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>

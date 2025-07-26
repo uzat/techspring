@@ -1,26 +1,41 @@
+// ===== VIEWS/BLOG/INDEX.EJS =====
 <!-- views/blog/index.ejs -->
-<%- include("../partials/header") %>
+<%- include('../partials/header') %>
 
-<section class="page">
-  <h1>Techspring Blog</h1>
-  <p>Insights, updates, and innovations from our team.</p>
+<main class="main-content page-content">
+    <div class="container">
+        <section class="page-header">
+            <h1>TechSpring Blog</h1>
+            <p class="page-subtitle">Insights, updates, and innovations from the TechSpring team</p>
+            <a href="/blog/new" class="btn btn-primary">Write New Post</a>
+        </section>
 
-  <% if (posts.length === 0) { %>
-    <p>No posts yet. Be the first to write one!</p>
-  <% } else { %>
-    <ul class="blog-list">
-      <% posts.forEach(post => { %>
-        <li class="blog-post">
-          <h2><a href="/blog/<%= post._id %>"><%= post.title %></a></h2>
-          <p class="blog-meta">Posted <%= post.createdAt.toLocaleDateString() %></p>
-          <p><%= post.excerpt %></p>
-          <a href="/blog/<%= post._id %>">Read More</a>
-        </li>
-      <% }) %>
-    </ul>
-  <% } %>
+        <section class="blog-list">
+            <% if (posts && posts.length > 0) { %>
+                <div class="posts-grid">
+                    <% posts.forEach(post => { %>
+                        <article class="post-card">
+                            <div class="post-content">
+                                <h2><a href="/blog/<%= post.id %>"><%= post.title %></a></h2>
+                                <p class="post-excerpt">
+                                    <%= post.content.length > 200 ? post.content.substring(0, 200) + '...' : post.content %>
+                                </p>
+                                <div class="post-meta">
+                                    <span class="post-date">
+                                        <%= new Date(post.created_at).toLocaleDateString('en-AU', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </span>
+                                    <div class="post-actions">
+                                        <a href="/blog/<%= post.id %>" class="btn btn-sm">Read More</a>
+                                        <a href="/blog/<%= post.id %>/edit" class="btn btn-sm btn-secondary">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+    </div>
+</main>
 
-  <a class="button" href="/blog/new">+ New Post</a>
-</section>
-
-<%- include("../partials/footer") %>
+<%- include('../partials/footer') %>
