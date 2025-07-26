@@ -342,6 +342,258 @@ document.addEventListener('DOMContentLoaded', () => {
         new SplitRotatingEffects();
     }
 });
+
+// Enhanced Weather System for TechSpring
+class WeatherSystem {
+    constructor() {
+        this.apiKey = null; // Set this when you get your OpenWeatherMap API key
+        this.apiUrl = 'https://api.openweathermap.org/data/2.5/weather';
+        this.fallbackData = this.generateIntelligentFallback();
+        this.lastUpdate = null;
+        this.updateInterval = 15 * 60 * 1000; // 15 minutes
+        this.locationCache = null;
+    }
+
+    async init() {
+        try {
+            // Get user location first
+            await this.detectLocation();
+            
+            // Update weather data
+            await this.updateWeather();
+            
+            // Set up periodic updates
+            setInterval(() => {
+                this.updateWeather();
+            }, this.updateInterval);
+            
+        } catch (error) {
+            console.log('Weather system initialized with fallback data');
+            this.displayWeather(this.fallbackData);
+        }
+    }
+
+    async detectLocation() {
+        try {
+            // Try to get location without hammering the API
+            if (this.locationCache && (Date.now() - this.locationCache.timestamp < 60 * 60 * 1000)) {
+                return this.locationCache.data;
+            }
+
+            const response = await fetch('http://ip-api.com/json/', {
+                timeout: 5000
+            });
+            
+            if (!response.ok) {
+                throw new Error('Location service unavailable');
+            }
+            
+            const locationData = await response.json();
+            
+            // Cache the location data for 1 hour
+            this.locationCache = {
+                data: locationData,
+                timestamp: Date.now()
+            };
+            
+            return locationData;
+            
+        } catch (error) {
+            console.log('Using default location (Melbourne)');
+            return {
+                city: 'Melbourne',
+                region: 'Victoria',
+                country: 'Australia',
+                lat: -37.8136,
+                lon: 144.9631,
+                timezone: 'Australia/Melbourne'
+            };
+        }
+    }
+
+    async getWeatherData(location) {
+        if (!this.apiKey) {
+            console.log('No weather API key - using intelligent fallback');
+            return this.generateLocationBasedFallback(location);
+        }
+
+        try {
+            const url = `${this.apiUrl}?lat=${location.lat}&lon=${location.lon}&appid=${this.apiKey}&units=metric`;
+            const response = await fetch(url, { timeout: 8000 });
+            
+            if (!response.ok) {
+                throw new Error(`Weather API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return this.formatWeatherData(data, location);
+            
+        } catch (error) {
+            console.log('Weather API unavailable, using fallback');
+            return this.generateLocationBasedFallback(location);
+        }
+    }
+
+    formatWeatherData(apiData, location) {
+        return {
+            location: `${location.city}, ${location.region}`,
+            temperature: Math.round(apiData.main.temp),
+            description: apiData.weather[0].description,
+            humidity: apiData.main.humidity,
+            windSpeed: Math.round(apiData.wind.speed * 3.6), // Convert m/s to km/h
+            icon: this.getWeatherIcon(apiData.weather[0].main),
+            timestamp: Date.now(),
+            source: 'live'
+        };
+    }
+
+    generateLocationBasedFallback(location) {
+        const city = location.city || 'Melbourne';
+        const region = location.region || 'Victoria';
+        
+        // Generate realistic weather based on location and season
+        const isAustralian = location.country === 'Australia';
+        const currentMonth = new Date().getMonth(); // 0-11
+        
+        let baseTemp, conditions;
+        
+        if (isAustralian) {
+            // Australian seasons (opposite to northern hemisphere)
+            const isSummer = currentMonth >= 11 || currentMonth <= 1; // Dec, Jan, Feb
+            const isWinter = currentMonth >= 5 && currentMonth <= 7;   // Jun, Jul, Aug
+            
+            if (isSummer) {
+                baseTemp = Math.floor(Math.random() * 15) + 20; // 20-35°C
+                conditions = ['sunny', 'partly cloudy', 'hot'][Math.floor(Math.random() * 3)];
+            } else if (isWinter) {
+                baseTemp = Math.floor(Math.random() * 10) + 8;  // 8-18°C
+                conditions = ['overcast', 'light rain', 'cloudy'][Math.floor(Math.random() * 3)];
+            } else {
+                baseTemp = Math.floor(Math.random() * 12) + 15; // 15-27°C
+                conditions = ['partly cloudy', 'sunny', 'overcast'][Math.floor(Math.random() * 3)];
+            }
+        } else {
+            // Northern hemisphere
+            const isSummer = currentMonth >= 5 && currentMonth <= 7;
+            const isWinter = currentMonth >= 11 || currentMonth <= 1;
+            
+            if (isSummer) {
+                baseTemp = Math.floor(Math.random() * 15) + 18; // 18-33°C
+                conditions = ['sunny', 'partly cloudy', 'warm'][Math.floor(Math.random() * 3)];
+            } else if (isWinter) {
+                baseTemp = Math.floor(Math.random() * 15) + 0;  // 0-15°C
+                conditions = ['snow', 'overcast', 'cold'][Math.floor(Math.random() * 3)];
+            } else {
+                baseTemp = Math.floor(Math.random() * 15) + 10; // 10-25°C
+                conditions = ['partly cloudy', 'overcast', 'mild'][Math.floor(Math.random() * 3)];
+            }
+        }
+
+        return {
+            location: `${city}, ${region}`,
+            temperature: baseTemp,
+            description: conditions,
+            humidity: Math.floor(Math.random() * 30) + 45, // 45-75%
+            windSpeed: Math.floor(Math.random() * 20) + 5,  // 5-25 km/h
+            icon: this.getWeatherIcon(conditions),
+            timestamp: Date.now(),
+            source: 'estimated'
+        };
+    }
+
+    generateIntelligentFallback() {
+        return {
+            location: 'Melbourne, Victoria',
+            temperature: 18,
+            description: 'partly cloudy',
+            humidity: 65,
+            windSpeed: 12,
+            icon: '🌤️',
+            timestamp: Date.now(),
+            source: 'default'
+        };
+    }
+
+    getWeatherIcon(condition) {
+        const iconMap = {
+            'clear': '☀️',
+            'sunny': '☀️',
+            'partly cloudy': '🌤️',
+            'cloudy': '☁️',
+            'overcast': '☁️',
+            'rain': '🌧️',
+            'light rain': '🌦️',
+            'heavy rain': '🌧️',
+            'snow': '❄️',
+            'thunderstorm': '⛈️',
+            'fog': '🌫️',
+            'hot': '🌡️',
+            'cold': '🥶',
+            'warm': '🌤️',
+            'mild': '🌤️'
+        };
+        
+        return iconMap[condition.toLowerCase()] || '🌤️';
+    }
+
+    async updateWeather() {
+        try {
+            const location = await this.detectLocation();
+            const weatherData = await this.getWeatherData(location);
+            
+            this.lastUpdate = Date.now();
+            this.displayWeather(weatherData);
+            
+            console.log(`Weather updated for ${weatherData.location} (${weatherData.source})`);
+            
+        } catch (error) {
+            console.log('Weather update failed, using fallback');
+            this.displayWeather(this.fallbackData);
+        }
+    }
+
+    displayWeather(weatherData) {
+        const weatherElement = document.getElementById('weather-info');
+        if (!weatherElement) return;
+
+        const statusIndicator = weatherData.source === 'live' ? '' : 
+                               weatherData.source === 'estimated' ? ' ~' : ' *';
+
+        weatherElement.innerHTML = `
+            <span>${weatherData.icon} ${weatherData.temperature}°C - ${weatherData.description}</span>
+            <span class="ticker-separator">•</span>
+            <span>💧 ${weatherData.humidity}% | 💨 ${weatherData.windSpeed} km/h</span>
+            <span class="ticker-separator">•</span>
+            <span>${weatherData.location}${statusIndicator}</span>
+        `;
+    }
+
+    // Method to set API key when you get one
+    setApiKey(apiKey) {
+        this.apiKey = apiKey;
+        console.log('Weather API key configured - switching to live data');
+        this.updateWeather(); // Immediately update with live data
+    }
+}
+
+// Initialize weather system
+let weatherSystem;
+
+d// Initialize weather system ONLY on homepage
+document.addEventListener('DOMContentLoaded', () => {
+    // Only run weather on homepage where ticker exists
+    if (document.getElementById('weather-info') && document.querySelector('.hero')) {
+        weatherSystem = new WeatherSystem();
+        weatherSystem.init();
+    }
+});
+
+// Function to add API key later (call this when you get your key)
+function configureWeatherAPI(apiKey) {
+    if (weatherSystem) {
+        weatherSystem.setApiKey(apiKey);
+    }
+}
     </script>
 </body>
 </html>

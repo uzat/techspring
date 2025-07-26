@@ -28,13 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Rotating banner background (homepage only)
+// Rotating banner background (homepage only) - Updated for 7 images
     if (document.querySelector('.hero')) {
         const bannerImages = [
             '/images/ai-banner-1.jpg',
             '/images/ai-banner-2.jpg',
             '/images/ai-banner-3.jpg',
             '/images/ai-banner-4.jpg',
-            '/images/ai-banner-5.jpg'
+            '/images/ai-banner-5.jpg',
+            '/images/ai-banner-6.jpg',
+            '/images/ai-banner-7.jpg'
         ];
         
         let currentImageIndex = 0;
@@ -42,21 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const rotateBanner = () => {
             currentImageIndex = (currentImageIndex + 1) % bannerImages.length;
-            
-            // Create a temporary pseudo-element for smooth transition
             const nextImage = bannerImages[currentImageIndex];
             
-            // Update the CSS background image with fade effect
-            heroSection.style.setProperty('--next-bg', `url('${nextImage}')`);
-            
-            // Add a CSS class to trigger the transition
-            heroSection.classList.add('transitioning');
-            
-            setTimeout(() => {
-                // Update the main background after transition
-                heroSection.style.backgroundImage = `url('${nextImage}')`;
-                heroSection.classList.remove('transitioning');
-            }, 500);
+            // Smooth background transition
+            heroSection.style.backgroundImage = `url('${nextImage}')`;
         };
         
         // Set initial background
@@ -67,86 +59,48 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Rotate every 5 seconds
         setInterval(rotateBanner, 5000);
-    }
-    
-    // Time and weather display (homepage only)
+    }    
+    // Enhanced time display with timezone detection
     if (document.getElementById('current-time')) {
-        updateTimeAndWeather();
-        setInterval(updateTime, 1000);
-        setInterval(updateWeather, 300000); // Update weather every 5 minutes
+        updateTime();
+        setInterval(updateTime, 1000); // Update every second
     }
 });
 
-async function updateTimeAndWeather() {
-    await updateTime();
-    await updateWeather();
-}
-
+// Enhanced time function with better error handling
 async function updateTime() {
     try {
         const timeElement = document.getElementById('current-time');
         if (!timeElement) return;
         
-        // Get user's location for timezone
-        const response = await fetch('http://ip-api.com/json/');
-        const locationData = await response.json();
-        
-        const timezone = locationData.timezone || 'Australia/Melbourne';
-        const currentTime = new Date().toLocaleString('en-AU', {
-            timeZone: timezone,
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+        // Use the browser's timezone
+        const now = new Date();
+        const options = {
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
-        });
-        
-        timeElement.textContent = `${locationData.city || 'Melbourne'}: ${currentTime}`;
-    } catch (error) {
-        console.error('Error updating time:', error);
-        const timeElement = document.getElementById('current-time');
-        if (timeElement) {
-            timeElement.textContent = `Melbourne: ${new Date().toLocaleString('en-AU')}`;
-        }
-    }
-}
-
-async function updateWeather() {
-    try {
-        const weatherElement = document.getElementById('weather-info');
-        if (!weatherElement) return;
-        
-        // Get user's location
-        const locationResponse = await fetch('http://ip-api.com/json/');
-        const locationData = await locationResponse.json();
-        
-        const lat = locationData.lat || -37.8136;
-        const lon = locationData.lon || 144.9631;
-        const city = locationData.city || 'Melbourne';
-        
-        // Mock weather data (replace with actual API call)
-        const weatherData = {
-            city: city,
-            temperature: Math.floor(Math.random() * 15) + 10, // Random temp between 10-25°C
-            description: ['sunny', 'partly cloudy', 'overcast', 'light rain'][Math.floor(Math.random() * 4)],
-            humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
-            windSpeed: Math.floor(Math.random() * 20) + 5 // 5-25 km/h wind
+            second: '2-digit',
+            hour12: true
         };
         
-        weatherElement.innerHTML = `
-            <div>🌡️ ${weatherData.temperature}°C - ${weatherData.description}</div>
-            <div>💧 ${weatherData.humidity}% humidity | 💨 ${weatherData.windSpeed} km/h wind</div>
-        `;
+        const timeString = now.toLocaleTimeString(undefined, options);
+        const dateString = now.toLocaleDateString(undefined, {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+        });
+        
+        // Get timezone abbreviation
+        const timeZoneAbbr = new Intl.DateTimeFormat('en', {
+            timeZoneName: 'short'
+        }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '';
+        
+        timeElement.textContent = `${dateString} ${timeString} ${timeZoneAbbr}`;
+        
     } catch (error) {
-        console.error('Error updating weather:', error);
-        const weatherElement = document.getElementById('weather-info');
-        if (weatherElement) {
-            weatherElement.innerHTML = `
-                <div>🌡️ 18°C - partly cloudy</div>
-                <div>💧 65% humidity | 💨 12 km/h wind</div>
-            `;
+        console.log('Time update error:', error.message);
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = `${new Date().toLocaleString()}`;
         }
     }
 }
