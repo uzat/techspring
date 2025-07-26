@@ -1,4 +1,3 @@
-// ===== PUBLIC/JS/MAIN.JS =====
 /* public/js/main.js */
 document.addEventListener('DOMContentLoaded', () => {
     // Theme toggle functionality
@@ -28,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Rotating banner images (homepage only)
-    if (document.getElementById('rotating-banner')) {
+    // Rotating banner background (homepage only)
+    if (document.querySelector('.hero')) {
         const bannerImages = [
             '/images/ai-banner-1.jpg',
             '/images/ai-banner-2.jpg',
@@ -39,17 +38,32 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         
         let currentImageIndex = 0;
-        const bannerElement = document.getElementById('rotating-banner');
+        const heroSection = document.querySelector('.hero');
         
         const rotateBanner = () => {
             currentImageIndex = (currentImageIndex + 1) % bannerImages.length;
-            bannerElement.style.opacity = '0';
+            
+            // Create a temporary pseudo-element for smooth transition
+            const nextImage = bannerImages[currentImageIndex];
+            
+            // Update the CSS background image with fade effect
+            heroSection.style.setProperty('--next-bg', `url('${nextImage}')`);
+            
+            // Add a CSS class to trigger the transition
+            heroSection.classList.add('transitioning');
             
             setTimeout(() => {
-                bannerElement.src = bannerImages[currentImageIndex];
-                bannerElement.style.opacity = '1';
+                // Update the main background after transition
+                heroSection.style.backgroundImage = `url('${nextImage}')`;
+                heroSection.classList.remove('transitioning');
             }, 500);
         };
+        
+        // Set initial background
+        heroSection.style.backgroundImage = `url('${bannerImages[0]}')`;
+        heroSection.style.backgroundSize = 'cover';
+        heroSection.style.backgroundPosition = 'center';
+        heroSection.style.backgroundRepeat = 'no-repeat';
         
         // Rotate every 5 seconds
         setInterval(rotateBanner, 5000);
@@ -118,7 +132,7 @@ async function updateWeather() {
             temperature: Math.floor(Math.random() * 15) + 10, // Random temp between 10-25°C
             description: ['sunny', 'partly cloudy', 'overcast', 'light rain'][Math.floor(Math.random() * 4)],
             humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
-            windSpeed: Math.floor(Math.random() * 20) + 5 // 5-25 km/h
+            windSpeed: Math.floor(Math.random() * 20) + 5 // 5-25 km/h wind
         };
         
         weatherElement.innerHTML = `

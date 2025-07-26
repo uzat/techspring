@@ -34,236 +34,314 @@
         <script src="/js/particles-config.js"></script>
     <% } %>
     <script>
-    // Rotating Effects System
-    class RotatingEffects {
-        constructor() {
-            this.effects = [
-                'chromeSphere',
-                'typedText', 
-                'neuralNetwork',
-                'aiProcessing'
-            ];
-            this.currentEffect = this.selectRandomEffect();
-            this.init();
+// Updated Rotating Effects System - Split between Hero and Features
+// Updated Rotating Effects System - Chrome Sphere Replaced
+class SplitRotatingEffects {
+    constructor() {
+        this.heroEffects = ['aiProcessing'];
+        // Removed chromeSphere, added floatingShapes
+        this.featuresEffects = ['floatingShapes', 'typedText', 'neuralNetwork'];
+        
+        this.heroEffect = this.selectHeroEffect();
+        this.featuresEffect = this.selectFeaturesEffect();
+        
+        this.init();
+    }
+    
+    selectHeroEffect() {
+        // AI Status appears 30% of the time, otherwise no hero effect
+        return Math.random() < 0.3 ? 'aiProcessing' : null;
+    }
+    
+    selectFeaturesEffect() {
+        // Always show a features effect, avoid repeating the last one
+        const lastEffect = localStorage.getItem('lastFeaturesEffect');
+        let availableEffects = this.featuresEffects.filter(effect => effect !== lastEffect);
+        
+        if (availableEffects.length === 0) {
+            availableEffects = this.featuresEffects;
         }
         
-        selectRandomEffect() {
-            // Get a random effect, but avoid the same one as last time
-            const lastEffect = localStorage.getItem('lastHeroEffect');
-            let availableEffects = this.effects.filter(effect => effect !== lastEffect);
-            
-            // If all effects have been shown, reset the pool
-            if (availableEffects.length === 0) {
-                availableEffects = this.effects;
-            }
-            
-            const selectedEffect = availableEffects[Math.floor(Math.random() * availableEffects.length)];
-            localStorage.setItem('lastHeroEffect', selectedEffect);
-            return selectedEffect;
+        const selectedEffect = availableEffects[Math.floor(Math.random() * availableEffects.length)];
+        localStorage.setItem('lastFeaturesEffect', selectedEffect);
+        return selectedEffect;
+    }
+    
+    init() {
+        console.log(`Loading hero effect: ${this.heroEffect || 'none'}`);
+        console.log(`Loading features effect: ${this.featuresEffect}`);
+        
+        // Hide all effect containers
+        document.querySelectorAll('.effect-container').forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Initialize hero effect (if any)
+        if (this.heroEffect) {
+            this.initHeroEffect(this.heroEffect);
         }
         
-        init() {
-            console.log(`Loading hero effect: ${this.currentEffect}`);
-            
-            // Hide all effect containers
-            document.querySelectorAll('.effect-container').forEach(container => {
-                container.style.display = 'none';
-            });
-            
-            // Show and initialize the selected effect
-            switch(this.currentEffect) {
-                case 'chromeSphere':
-                    this.initChromeSphere();
-                    break;
-                case 'typedText':
-                    this.initTypedText();
-                    break;
-                case 'neuralNetwork':
-                    this.initNeuralNetwork();
-                    break;
-                case 'aiProcessing':
-                    this.initAIProcessing();
-                    break;
-            }
-        }
-        
-        initChromeSphere() {
-            const container = document.getElementById('chrome-sphere-container');
-            container.style.display = 'block';
-            
-            const canvas = document.getElementById('chrome-sphere');
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
-            
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            
-            // Create chrome sphere
-            const geometry = new THREE.SphereGeometry(2, 32, 32);
-            const material = new THREE.MeshBasicMaterial({ 
-                color: 0x8b9dc3,
-                transparent: true,
-                opacity: 0.7,
-                wireframe: true
-            });
-            const sphere = new THREE.Mesh(geometry, material);
-            scene.add(sphere);
-            
-            camera.position.z = 5;
-            
-            // Animation loop
-            function animate() {
-                requestAnimationFrame(animate);
-                sphere.rotation.x += 0.01;
-                sphere.rotation.y += 0.01;
-                renderer.render(scene, camera);
-            }
-            animate();
-            
-            // Handle resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-        
-        initTypedText() {
-            const container = document.getElementById('typed-container');
-            container.style.display = 'block';
-            
-            const options = {
-                strings: [
-                    'AI Innovation',
-                    'Technology Solutions', 
-                    'Future is Now',
-                    'TechSpring AI'
-                ],
-                typeSpeed: 100,
-                backSpeed: 50,
-                backDelay: 2000,
-                loop: true,
-                showCursor: true,
-                cursorChar: '|'
-            };
-            
-            new Typed('#typed-text', options);
-        }
-        
-        initNeuralNetwork() {
-            const container = document.getElementById('neural-network');
-            container.style.display = 'block';
-            
-            const canvas = document.getElementById('neural-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            const nodes = [];
-            const connections = [];
-            
-            // Create nodes
-            for (let i = 0; i < 50; i++) {
-                nodes.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: (Math.random() - 0.5) * 2,
-                    radius: Math.random() * 3 + 1
-                });
-            }
-            
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Update nodes
-                nodes.forEach(node => {
-                    node.x += node.vx;
-                    node.y += node.vy;
-                    
-                    if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
-                    if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
-                    
-                    // Draw node
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = '#00d4aa';
-                    ctx.fill();
-                });
-                
-                // Draw connections
-                nodes.forEach((node, i) => {
-                    nodes.slice(i + 1).forEach(otherNode => {
-                        const dist = Math.sqrt(
-                            Math.pow(node.x - otherNode.x, 2) + 
-                            Math.pow(node.y - otherNode.y, 2)
-                        );
-                        
-                        if (dist < 150) {
-                            ctx.beginPath();
-                            ctx.moveTo(node.x, node.y);
-                            ctx.lineTo(otherNode.x, otherNode.y);
-                            ctx.strokeStyle = `rgba(0, 212, 170, ${1 - dist / 150})`;
-                            ctx.lineWidth = 1;
-                            ctx.stroke();
-                        }
-                    });
-                });
-                
-                requestAnimationFrame(animate);
-            }
-            animate();
-            
-            // Handle resize
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
-        }
-        
-        initAIProcessing() {
-            const container = document.getElementById('ai-processing');
-            container.style.display = 'block';
-            
-            const metrics = [
-                { id: 'neural', max: 95 },
-                { id: 'data', max: 87 },
-                { id: 'model', max: 92 }
-            ];
-            
-            metrics.forEach((metric, index) => {
-                setTimeout(() => {
-                    this.animateMetric(metric.id, metric.max);
-                }, index * 800);
-            });
-        }
-        
-        animateMetric(id, targetValue) {
-            const fill = document.getElementById(`${id}-fill`);
-            const value = document.getElementById(`${id}-value`);
-            let current = 0;
-            
-            const interval = setInterval(() => {
-                current += Math.random() * 3;
-                if (current >= targetValue) {
-                    current = targetValue;
-                    clearInterval(interval);
-                }
-                
-                fill.style.width = `${current}%`;
-                value.textContent = `${Math.round(current)}%`;
-            }, 50);
+        // Initialize features effect
+        this.initFeaturesEffect(this.featuresEffect);
+    }
+    
+    initHeroEffect(effect) {
+        switch(effect) {
+            case 'aiProcessing':
+                this.initAIProcessing();
+                break;
         }
     }
-
-    // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-        // Only initialize if we're on a page with the hero section
-        if (document.querySelector('.hero-effects-container')) {
-            new RotatingEffects();
+    
+    initFeaturesEffect(effect) {
+        switch(effect) {
+            case 'floatingShapes':
+                this.initFloatingShapes();
+                break;
+            case 'typedText':
+                this.initTypedText();
+                break;
+            case 'neuralNetwork':
+                this.initNeuralNetwork();
+                break;
         }
-    });
+    }
+    
+    initFloatingShapes() {
+        const container = document.getElementById('floating-shapes-container');
+        container.style.display = 'block';
+        
+        const canvas = document.getElementById('floating-shapes-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Get features section dimensions
+        const featuresSection = document.querySelector('.features');
+        const rect = featuresSection.getBoundingClientRect();
+        
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        const shapes = [];
+        
+        // Create floating geometric shapes
+        for (let i = 0; i < 8; i++) {
+            shapes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 1,
+                vy: (Math.random() - 0.5) * 1,
+                size: Math.random() * 30 + 20,
+                rotation: 0,
+                rotationSpeed: (Math.random() - 0.5) * 0.02,
+                type: Math.floor(Math.random() * 3), // 0: square, 1: triangle, 2: hexagon
+                opacity: Math.random() * 0.3 + 0.1
+            });
+        }
+        
+        function drawShape(ctx, shape) {
+            ctx.save();
+            ctx.translate(shape.x, shape.y);
+            ctx.rotate(shape.rotation);
+            ctx.strokeStyle = `rgba(0, 212, 170, ${shape.opacity})`;
+            ctx.lineWidth = 2;
+            
+            switch(shape.type) {
+                case 0: // Square
+                    ctx.strokeRect(-shape.size/2, -shape.size/2, shape.size, shape.size);
+                    break;
+                case 1: // Triangle
+                    ctx.beginPath();
+                    ctx.moveTo(0, -shape.size/2);
+                    ctx.lineTo(-shape.size/2, shape.size/2);
+                    ctx.lineTo(shape.size/2, shape.size/2);
+                    ctx.closePath();
+                    ctx.stroke();
+                    break;
+                case 2: // Hexagon
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * Math.PI) / 3;
+                        const x = Math.cos(angle) * shape.size/2;
+                        const y = Math.sin(angle) * shape.size/2;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    break;
+            }
+            ctx.restore();
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            shapes.forEach(shape => {
+                // Update position
+                shape.x += shape.vx;
+                shape.y += shape.vy;
+                shape.rotation += shape.rotationSpeed;
+                
+                // Bounce off edges
+                if (shape.x < 0 || shape.x > canvas.width) shape.vx *= -1;
+                if (shape.y < 0 || shape.y > canvas.height) shape.vy *= -1;
+                
+                // Draw shape
+                drawShape(ctx, shape);
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            const newRect = featuresSection.getBoundingClientRect();
+            canvas.width = newRect.width;
+            canvas.height = newRect.height;
+        });
+    }
+    
+    initTypedText() {
+        const container = document.getElementById('typed-container');
+        container.style.display = 'block';
+        
+        const options = {
+            strings: [
+                'Advanced AI Solutions',
+                'Cutting-Edge Technology', 
+                'Innovation in Action',
+                'Future Tech Today'
+            ],
+            typeSpeed: 80,
+            backSpeed: 40,
+            backDelay: 2500,
+            loop: true,
+            showCursor: true,
+            cursorChar: '|'
+        };
+        
+        new Typed('#typed-text', options);
+    }
+    
+    initNeuralNetwork() {
+        const container = document.getElementById('neural-network');
+        container.style.display = 'block';
+        
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Get features section dimensions
+        const featuresSection = document.querySelector('.features');
+        const rect = featuresSection.getBoundingClientRect();
+        
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        const nodes = [];
+        
+        // Create nodes
+        for (let i = 0; i < 40; i++) {
+            nodes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                radius: Math.random() * 2 + 1
+            });
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update nodes
+            nodes.forEach(node => {
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+                if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+                
+                // Draw node
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#00d4aa';
+                ctx.fill();
+            });
+            
+            // Draw connections
+            nodes.forEach((node, i) => {
+                nodes.slice(i + 1).forEach(otherNode => {
+                    const dist = Math.sqrt(
+                        Math.pow(node.x - otherNode.x, 2) + 
+                        Math.pow(node.y - otherNode.y, 2)
+                    );
+                    
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(node.x, node.y);
+                        ctx.lineTo(otherNode.x, otherNode.y);
+                        ctx.strokeStyle = `rgba(0, 212, 170, ${(1 - dist / 120) * 0.6})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                });
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            const newRect = featuresSection.getBoundingClientRect();
+            canvas.width = newRect.width;
+            canvas.height = newRect.height;
+        });
+    }
+    
+    initAIProcessing() {
+        const container = document.getElementById('ai-processing');
+        container.style.display = 'block';
+        
+        const metrics = [
+            { id: 'neural', max: 95 },
+            { id: 'data', max: 87 },
+            { id: 'model', max: 92 }
+        ];
+        
+        metrics.forEach((metric, index) => {
+            setTimeout(() => {
+                this.animateMetric(metric.id, metric.max);
+            }, index * 800);
+        });
+    }
+    
+    animateMetric(id, targetValue) {
+        const fill = document.getElementById(`${id}-fill`);
+        const value = document.getElementById(`${id}-value`);
+        let current = 0;
+        
+        const interval = setInterval(() => {
+            current += Math.random() * 3;
+            if (current >= targetValue) {
+                current = targetValue;
+                clearInterval(interval);
+            }
+            
+            fill.style.width = `${current}%`;
+            value.textContent = `${Math.round(current)}%`;
+        }, 50);
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if we're on a page with the effect containers
+    if (document.querySelector('.hero-effects-container') && document.querySelector('.features-effects-container')) {
+        new SplitRotatingEffects();
+    }
+});
     </script>
 </body>
 </html>
